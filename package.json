@@ -1,0 +1,24 @@
+{
+  "name": "pce-utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "siwidataParser.js",
+  "scripts": {
+    "getBoats": "wget http://ffcanoe.asso.fr/eau_vive/slalom/ffcanoe-sla.pce",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/niabb/pce-utils.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/niabb/pce-utils/issues"
+  },
+  "homepage": "https://github.com/niabb/pce-utils#readme",
+  "dependencies": {
+    "async": "^2.4.0",
+    "csv-to-array": "^1.0.2"
+  }
+}
