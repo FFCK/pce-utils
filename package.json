@@ -9,16 +9,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/niabb/pce-utils.git"
+    "url": "git+https://github.com/FFCK/pce-utils.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/niabb/pce-utils/issues"
+    "url": "https://github.com/FFCK/pce-utils/issues"
   },
-  "homepage": "https://github.com/niabb/pce-utils#readme",
+  "homepage": "https://github.com/FFCK/pce-utils#readme",
   "dependencies": {
     "async": "^2.4.0",
-    "csv-to-array": "^1.0.2"
+    "csv-to-array": "^1.0.2",
+    "csvtojson": "^1.1.5"
   }
 }

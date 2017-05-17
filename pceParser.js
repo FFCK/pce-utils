@@ -1,12 +1,15 @@
 'use strict';
 
 const csv2Array = require("csv-to-array");
+const csv = require('csvtojson');
+const readline = require('readline');
+const fs = require('fs');
 
 
 let embarcationJson;
 let licenciesJson;
 
-module.exports = {parseEmbarcations, parseLicencies, getLicencesFromName, getLicenciesFromLicenceAndName, getLicenciesFromNames, getPceRowRegistrationMono, getAgeCategoryFromYear};
+module.exports = {parseEmbarcations, parseLicencies, getLicencesFromName, getLicenciesFromLicenceAndName, getLicenciesFromNames, getPceRowRegistrationMono, getAgeCategoryFromYear, parseResult};
 
 
 const columnsPceEmb = ["embarcationId", "boat", "category", "division", "club", "clubId", "cd", "cdId", "cr", "crId", "value", "licence", "lastname","firstname", "sex", "dob", "licence2", "lastname2","firstname2", "sex2", "dob2"];
@@ -36,6 +39,38 @@ function parseLicencies(cb) {
     licenciesJson = licencies;
     if (cb) cb(licencies);
   });
+}
+
+const columnsPceResultsMono = [
+  'embarcationId', 'boat', 'category', 'epreuve', 'club', 'clubId', 'cd', 'cdId', 'cr', 'crId', 'value', 'bib', 'peopleInTheBoat', 
+  'licence', 'lastname','firstname', 'sex', 'dob', 'CO', 'time', 'totalPenalties', 'detailPenalties', 'score'
+];
+
+function parseResult(filePath, cb) {
+  let results = false;
+  const tokenResults = '[resultats]';
+  const tokenOfficiels = '[officiels]';
+
+  let mono = '';
+  const rl = readline.createInterface({
+    input: fs.createReadStream(filePath)
+  });
+  rl.on('line', (line) => {
+    if(line.length >= tokenResults.length && line.substr(0, tokenResults.length) === tokenResults) {
+      results = true;
+      return;
+    } else if(line.length >= tokenOfficiels.length && line.substr(0, tokenOfficiels.length) === tokenOfficiels) {
+      results = false;
+    }
+    if(results && line.length>2) {
+      console.log(`Line from file: ${line}`);
+      mono += line+'\n';
+    }
+  }).on('close', () => {
+    csv({noheader: true, headers: columnsPceResultsMono, delimiter:';'}).fromString(mono).on('end_parsed', (jsonArrObj) => {
+      cb(jsonArrObj);
+    });
+  }); 
 }
 
 function getLicencesFromName(name) {
