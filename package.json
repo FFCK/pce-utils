@@ -20,6 +20,7 @@
   "dependencies": {
     "async": "^2.4.0",
     "csv-to-array": "^1.0.2",
-    "csvtojson": "^1.1.5"
+    "csvtojson": "^1.1.5",
+    "lodash": "^4.17.4"
   }
 }
