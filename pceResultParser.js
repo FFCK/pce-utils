@@ -1,9 +1,10 @@
 const csv = require('csvtojson');
 const readline = require('readline');
+const json2csv = require('json2csv');
 const fs = require('fs');
 const _ = require('lodash');
 
-module.exports = {parseResult};
+module.exports = {parseResult, fixMissingCriteriaOnFinal};
 
 
 function sortResultsOnScore(a, b) {
@@ -72,7 +73,7 @@ function parseResult(filePath, cb) {
   let mono = '';
   let bi = '';
   const rl = readline.createInterface({
-    input: fs.createReadStream(filePath)
+    input: fs.createReadStream(filePath, 'binary')
   });
   rl.on('line', (line) => {
     if(line.length >= tokenResults.length && line.substr(0, tokenResults.length) === tokenResults) {
@@ -103,3 +104,78 @@ function parseResult(filePath, cb) {
     });
   }); 
 }
+
+function fixMissingCriteriaOnFinal(filePathQualif, filePathFinal, outputFile, cb) {
+  function haveStarted(e) {
+    const score = e.score.toLowerCase();
+    return (score !== 'abs' && score !== 'nt');
+  }
+
+  function giveCriteria(catFiltered) {
+    const nbBoatHavingStarted = catFiltered.filter(haveStarted).length;
+    let nbBoatFinalA = nbBoatHavingStarted < 6 ? 5 : Math.round(nbBoatHavingStarted/2);
+    //console.log(`starts: ${nbBoatHavingStarted}, number of boats in Final A: ${nbBoatFinalA}`);
+    for(let e of catFiltered) {
+      if(e.rank==='') {
+        if(haveStarted(e)) {
+          e.criteria = 'B';
+        } else {
+          e.criteria = '';
+        }
+      } else if(parseInt(e.rank) <=nbBoatFinalA) {
+        e.criteria = 'A';
+      } else {
+        e.criteria = 'B';
+      }
+    }
+
+  }
+
+  parseResult(filePathQualif, (headerQualif, resultJsonMonoQualif, resultJsonBiQualif, footerQualif) => {
+    parseResult(filePathFinal, (headerFinale, resultJsonMonoFinale, resultJsonBiFinale, footerFinale) => {
+      const catMono = ['K1H', 'K1D', 'C1H', 'C1D', 'INV'];
+      const finalMono = [];
+      const finalBi = [];
+      for(let catM of catMono) {
+        const catFiltered = resultJsonMonoQualif.filter((e)=>e.epreuve===catM);
+        //console.log(`Cat: ${catM}`);
+
+        giveCriteria(catFiltered);
+        
+        const map = catFiltered.map((e) => {return {embarcationId:e.embarcationId, score:e.score, rank:e.rank, criteria:e.criteria};});
+        /*for(let e of map) {
+          console.log(e);
+        }*/
+        //console.log(map);
+
+        for(let f of catFiltered) {
+          let found = resultJsonMonoFinale.find((e) => e.embarcationId === f.embarcationId);
+          found.criteria = f.criteria;
+          finalMono.push(found);
+        }
+
+      }
+      const catBi = ['C2H', 'C2M', 'C2D'];
+      for(let catB of catBi) {
+        const catFiltered = resultJsonBiQualif.filter((e)=>e.epreuve===catB);
+        //console.log(`Cat: ${catB}`);
+
+        giveCriteria(catFiltered);
+        const map = catFiltered.map((e) => {return {embarcationId:e.embarcationId, score:e.score, rank:e.rank, criteria:e.criteria};});
+        //console.log(map);
+
+        for(let f of catFiltered) {
+          let found = resultJsonBiFinale.find((e) => e.embarcationId === f.embarcationId);
+          found.criteria = f.criteria;
+          finalBi.push(found);
+        }
+      }
+      //console.log(final);
+      //console.log(json2csv({data:finalMono, hasCSVColumnTitle:false, del:';', quotes:''}));
+      //console.log(json2csv({data:finalBi, hasCSVColumnTitle:false, del:';', quotes:''}));
+      const pceFinal = headerFinale+'\n[resultats]\n'+json2csv({data:finalMono, hasCSVColumnTitle:false, del:';', quotes:''})+'\n'+json2csv({data:finalBi, hasCSVColumnTitle:false, del:';', quotes:''})+'\n\n'+footerFinale;
+      //console.log(pceFinal);
+      fs.writeFile(outputFile, pceFinal, cb);
+    });
+  });
+} 
