@@ -150,8 +150,10 @@ function fixMissingCriteriaOnFinal(filePathQualif, filePathFinal, outputFile, cb
 
         for(let f of catFiltered) {
           let found = resultJsonMonoFinale.find((e) => e.embarcationId === f.embarcationId);
-          found.criteria = f.criteria;
-          finalMono.push(found);
+          if(found) {
+            found.criteria = f.criteria;
+            finalMono.push(found);
+          }
         }
 
       }
@@ -166,8 +168,10 @@ function fixMissingCriteriaOnFinal(filePathQualif, filePathFinal, outputFile, cb
 
         for(let f of catFiltered) {
           let found = resultJsonBiFinale.find((e) => e.embarcationId === f.embarcationId);
-          found.criteria = f.criteria;
-          finalBi.push(found);
+          if(found) {
+            found.criteria = f.criteria;
+            finalBi.push(found);
+          }
         }
       }
       //console.log(final);
