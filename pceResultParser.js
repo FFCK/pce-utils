@@ -49,24 +49,42 @@ function sortResultsOnRank(a, b) {
   }
 }
 
-const columnsPceResultsMono = [
+
+const columnsPceResultsMono1Run = [
   'embarcationId', 'boat', 'category', 'epreuve', 'club', 'clubId', 'cd', 'cdId', 'cr', 'crId', 'value', 'bib', 'peopleInTheBoat', 
-  'licence', 'lastname','firstname', 'sex', 'dob', 'CO', 'time', 'totalPenalties', 'detailPenalties', 'score', 'a', 'b', 'c', 'd', 'e',
-  'f', 'g', 'h', 'i', 'j', 'rank', 'criteria'
+  'licence', 'lastname','firstname', 'sex', 'dob', 'CO', 'time', 'totalPenalties', 'detailPenalties', 'score', 'startTime', 'startOrder',
+   '?', 'rank', 'criteria'
+];
+const columnsPceResultsMono2Runs = [
+  'embarcationId', 'boat', 'category', 'epreuve', 'club', 'clubId', 'cd', 'cdId', 'cr', 'crId', 'value', 'bib', 'peopleInTheBoat', 
+  'licence', 'lastname','firstname', 'sex', 'dob', 'CO', 'time', 'totalPenalties', 'detailPenalties', 'score', 'startTime', 'startOrder',
+   '?', 'time2', 'totalPenalties2', 'detailPenalties2','score2', 'startTime2', 'startOrder2', 'scoreTotal', 'rank', 'criteria'
 ];
 
-const columnsPceResultsBi = [
+
+const columnsPceResultsBi1Run = [
   'embarcationId', 'boat', 'category', 'epreuve', 'club', 'clubId', 'cd', 'cdId', 'cr', 'crId', 'value', 'bib', 'peopleInTheBoat', 
-  'licence1', 'lastname1','firstname1', 'sex1', 'dob1', 'licence2', 'lastname2','firstname2', 'sex2', 'dob2', 'CO', 'time', 'totalPenalties', 'detailPenalties', 'score', 'a', 'b', 'c', 'd', 'e',
-  'f', 'g', 'h', 'i', 'j', 'rank', 'criteria'
+  'licence1', 'lastname1','firstname1', 'sex1', 'dob1', 'licence2', 'lastname2','firstname2', 'sex2', 'dob2', 'CO', 'time', 'totalPenalties', 
+  'detailPenalties', 'score', 'startTime', 'startOrder','?', 
+  'rank', 'criteria'
+];
+const columnsPceResultsBi2Runs = [
+  'embarcationId', 'boat', 'category', 'epreuve', 'club', 'clubId', 'cd', 'cdId', 'cr', 'crId', 'value', 'bib', 'peopleInTheBoat', 
+  'licence1', 'lastname1','firstname1', 'sex1', 'dob1', 'licence2', 'lastname2','firstname2', 'sex2', 'dob2', 'CO', 'time', 'totalPenalties', 
+  'detailPenalties', 'score', 'startTime', 'startOrder','?', 'time2', 'totalPenalties2', 'detailPenalties2','score2', 'startTime2', 'startOrder2', 
+  'scoreTotal', 'rank', 'criteria'
 ];
 
-function parseResult(filePath, cb) {
+function parseResult(filePath, numberOfRunsInPce, cb) {
   let headerSection = true;
   let results = false;
   let footerSection = false;
   const tokenResults = '[resultats]';
   const tokenOfficiels = '[officiels]';
+
+  const columnsMonoToBeUsed = numberOfRunsInPce === 2 ? columnsPceResultsMono2Runs : columnsPceResultsMono1Run;
+  const columnsBiToBeUsed = numberOfRunsInPce === 2 ? columnsPceResultsBi2Runs : columnsPceResultsBi1Run;
+
 
   let header = '';
   let footer = '';
@@ -97,15 +115,16 @@ function parseResult(filePath, cb) {
     }
   }).on('close', () => {
     //console.log(mono);
-    csv({noheader: true, headers: columnsPceResultsMono, delimiter:';'}).fromString(mono).on('end_parsed', (jsonArrObjMono) => {
-      csv({noheader: true, headers: columnsPceResultsBi, delimiter:';'}).fromString(bi).on('end_parsed', (jsonArrObjBi) => {
+
+    csv({noheader: true, headers: columnsMonoToBeUsed, delimiter:';'}).fromString(mono).on('end_parsed', (jsonArrObjMono) => {
+      csv({noheader: true, headers: columnsBiToBeUsed, delimiter:';'}).fromString(bi).on('end_parsed', (jsonArrObjBi) => {
         cb(header, _.sortBy(jsonArrObjMono, (e) => parseFloat(e.score)), _.sortBy(jsonArrObjBi, (e) => parseFloat(e.score)), footer);
       });
     });
   }); 
 }
 
-function fixMissingCriteriaOnFinal(filePathQualif, filePathFinal, outputFile, cb) {
+function fixMissingCriteriaOnFinal(filePathQualif, filePathFinal, numberOfRunsInPce, outputFile, cb) {
   function haveStarted(e) {
     const score = e.score.toLowerCase();
     return (score !== 'abs' && score !== 'nt');
@@ -131,21 +150,23 @@ function fixMissingCriteriaOnFinal(filePathQualif, filePathFinal, outputFile, cb
 
   }
 
-  parseResult(filePathQualif, (headerQualif, resultJsonMonoQualif, resultJsonBiQualif, footerQualif) => {
-    parseResult(filePathFinal, (headerFinale, resultJsonMonoFinale, resultJsonBiFinale, footerFinale) => {
+  parseResult(filePathQualif, numberOfRunsInPce, (headerQualif, resultJsonMonoQualif, resultJsonBiQualif, footerQualif) => {
+    parseResult(filePathFinal, numberOfRunsInPce, (headerFinale, resultJsonMonoFinale, resultJsonBiFinale, footerFinale) => {
+      // const catMono = [/*'K1H', */'K1D'/*, 'C1H', 'C1D', 'INV'*/];
       const catMono = ['K1H', 'K1D', 'C1H', 'C1D', 'INV'];
       const finalMono = [];
       const finalBi = [];
       for(let catM of catMono) {
         const catFiltered = resultJsonMonoQualif.filter((e)=>e.epreuve===catM);
         //console.log(`Cat: ${catM}`);
-
+        //console.log(catFiltered);
         giveCriteria(catFiltered);
         
         const map = catFiltered.map((e) => {return {embarcationId:e.embarcationId, score:e.score, rank:e.rank, criteria:e.criteria};});
         /*for(let e of map) {
           console.log(e);
         }*/
+        
         //console.log(map);
 
         for(let f of catFiltered) {
@@ -157,7 +178,9 @@ function fixMissingCriteriaOnFinal(filePathQualif, filePathFinal, outputFile, cb
         }
 
       }
+      //const catBi = [/*'C2H', 'C2M', 'C2D'*/];
       const catBi = ['C2H', 'C2M', 'C2D'];
+
       for(let catB of catBi) {
         const catFiltered = resultJsonBiQualif.filter((e)=>e.epreuve===catB);
         //console.log(`Cat: ${catB}`);
