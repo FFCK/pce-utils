@@ -133,8 +133,9 @@ function fixMissingCriteriaOnFinal(filePathQualif, filePathFinal, numberOfRunsIn
   function giveCriteria(catFiltered) {
     const nbBoatHavingStarted = catFiltered.filter(haveStarted).length;
     let nbBoatFinalA = nbBoatHavingStarted < 6 ? 5 : Math.round(nbBoatHavingStarted/2);
-    //console.log(`starts: ${nbBoatHavingStarted}, number of boats in Final A: ${nbBoatFinalA}`);
-    for(let e of catFiltered) {
+    console.log(`starts: ${nbBoatHavingStarted}, number of boats in Final A: ${nbBoatFinalA}`);
+    catFiltered = _.sortBy(catFiltered, (e) => parseFloat(e.score.replace(',', '.')));
+    /*for(let e of catFiltered) {
       if(e.rank==='') {
         if(haveStarted(e)) {
           e.criteria = 'B';
@@ -146,6 +147,15 @@ function fixMissingCriteriaOnFinal(filePathQualif, filePathFinal, numberOfRunsIn
       } else {
         e.criteria = 'B';
       }
+    }*/
+    for(let i=0; i < catFiltered.length; i++) {
+      const e = catFiltered[i];
+      //console.log(e);
+      if(i+1<=nbBoatFinalA) {
+        e.criteria = 'A';
+      } else {
+        e.criteria = 'B';
+      }
     }
 
   }
@@ -153,12 +163,12 @@ function fixMissingCriteriaOnFinal(filePathQualif, filePathFinal, numberOfRunsIn
   parseResult(filePathQualif, numberOfRunsInPce, (headerQualif, resultJsonMonoQualif, resultJsonBiQualif, footerQualif) => {
     parseResult(filePathFinal, numberOfRunsInPce, (headerFinale, resultJsonMonoFinale, resultJsonBiFinale, footerFinale) => {
       // const catMono = [/*'K1H', */'K1D'/*, 'C1H', 'C1D', 'INV'*/];
-      const catMono = ['K1H', 'K1D', 'C1H', 'C1D', 'INV'];
+      const catMono = ['K1H', 'K1HM', 'K1D', 'K1DM', 'C1H', 'C1HM', 'C1D', 'C1DM', 'INV'];
       const finalMono = [];
       const finalBi = [];
       for(let catM of catMono) {
         const catFiltered = resultJsonMonoQualif.filter((e)=>e.epreuve===catM);
-        //console.log(`Cat: ${catM}`);
+        console.log(`Cat: ${catM}`);
         //console.log(catFiltered);
         giveCriteria(catFiltered);
         
@@ -179,7 +189,7 @@ function fixMissingCriteriaOnFinal(filePathQualif, filePathFinal, numberOfRunsIn
 
       }
       //const catBi = [/*'C2H', 'C2M', 'C2D'*/];
-      const catBi = ['C2H', 'C2M', 'C2D'];
+      const catBi = ['C2H', 'C2M', 'C2D', 'C2HM', 'C2MM', 'C2DM'];
 
       for(let catB of catBi) {
         const catFiltered = resultJsonBiQualif.filter((e)=>e.epreuve===catB);
