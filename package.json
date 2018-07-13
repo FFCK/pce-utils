@@ -21,7 +21,7 @@
     "async": "^2.4.0",
     "csv-to-array": "^1.0.2",
     "csvtojson": "^1.1.5",
-    "json2csv": "^3.7.3",
+    "json2csv": "^4.1.6",
     "lodash": "^4.17.5"
   }
 }
